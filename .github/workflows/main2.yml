@@ -1,0 +1,42 @@
+name: Build PoolPredictor Debug APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout پروژه
+      uses: actions/checkout@v4
+
+    - name: نصب Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    # نصب NDK (معمولاً Gradle خودش دانلود می‌کنه، اما برای اطمینان)
+    - name: نصب Android NDK (نسخه پیشنهادی جدید)
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r26d           # نسخه پایدار و جدید (2025-2026)
+        link-to-sdk: true
+
+    - name: ساخت APK Debug
+      run: ./gradlew assembleDebug --stacktrace --info
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+    - name: آپلود APK نهایی
+      uses: actions/upload-artifact@v4
+      with:
+        name: pool-predictor-debug-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        if-no-files-found: error
